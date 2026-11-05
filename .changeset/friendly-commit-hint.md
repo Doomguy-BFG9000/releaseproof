@@ -1,5 +1,5 @@
 ---
-"@releaseproof/cli": patch
+"releaseproof": patch
 ---
 
 Explain how to obtain a full commit SHA when a short hexadecimal commit is supplied,

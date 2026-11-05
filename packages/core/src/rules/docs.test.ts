@@ -1,12 +1,23 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+// The classic TypeScript compiler API, used only to parse the rule sources. TypeScript 7 no
+// longer ships it (the same reason the repository is pinned to 6.0.x), so moving to 7 means
+// replacing this parser here as well.
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const RULES_DOC = path.join(here, "../../../../docs/rules.md");
 const KEBAB_ID = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
+
+/**
+ * Rules whose severity is computed in a way the parser below cannot read, with every
+ * severity the rule can report and a comment saying where it is computed. Empty today. Add
+ * an entry here instead of loosening the parser; the parity test still compares the listed
+ * severities with docs/rules.md, and a stale entry fails.
+ */
+const SEVERITY_EXCEPTIONS: ReadonlyMap<string, readonly string[]> = new Map([]);
 
 /** Every `id: "<kebab-case>"` literal in the rule sources (tests excluded). */
 function ruleIdsInCode(dir: string = here): Set<string> {
@@ -23,8 +34,14 @@ function ruleIdsInCode(dir: string = here): Set<string> {
   return ids;
 }
 
-/** Read only literal severities and conditional branches, never execute rule code. */
-function ruleSeveritiesInSource(source: string): Map<string, Set<string>> {
+/**
+ * Read only literal severities and conditional branches, never execute rule code. A rule in
+ * `exceptions` takes its severities from there; any other unreadable severity throws.
+ */
+function ruleSeveritiesInSource(
+  source: string,
+  exceptions: ReadonlyMap<string, readonly string[]> = SEVERITY_EXCEPTIONS,
+): Map<string, Set<string>> {
   const severities = new Map<string, Set<string>>();
   const file = ts.createSourceFile("rule.ts", source, ts.ScriptTarget.Latest, true);
   function read(expression: ts.Expression | undefined, id: string): string[] {
@@ -40,9 +57,9 @@ function ruleSeveritiesInSource(source: string): Map<string, Set<string>> {
     ) {
       return read(expression.expression, id);
     }
-    // No exceptions are needed today. Any future dynamic rule must get an explicit,
-    // commented exception here, rather than silently disappearing from the parity check.
-    throw new Error(`${id}: cannot read severity statically`);
+    throw new Error(
+      `${id}: cannot read severity statically; add it to SEVERITY_EXCEPTIONS with a comment`,
+    );
   }
   function visit(node: ts.Node): void {
     if (ts.isObjectLiteralExpression(node)) {
@@ -56,7 +73,8 @@ function ruleSeveritiesInSource(source: string): Map<string, Set<string>> {
       const id = property("id")?.initializer;
       if (id && ts.isStringLiteral(id)) {
         const values = severities.get(id.text) ?? new Set<string>();
-        for (const severity of read(property("severity")?.initializer, id.text)) {
+        const listed = exceptions.get(id.text);
+        for (const severity of listed ?? read(property("severity")?.initializer, id.text)) {
           values.add(severity);
         }
         severities.set(id.text, values);
@@ -172,6 +190,19 @@ describe("docs/rules.md", () => {
     );
     expect([...(docs.get("a-rule") ?? [])].sort()).toEqual(["high", "medium"]);
     expect(docs.get("b-rule")).toEqual(docs.get("a-rule"));
+  });
+
+  it("takes an excepted rule's severities from the exception list instead of throwing", () => {
+    const code = ruleSeveritiesInSource(
+      `({ id: "a-rule", severity: pickSeverity() })`,
+      new Map([["a-rule", ["high", "medium"]]]),
+    );
+    expect([...(code.get("a-rule") ?? [])].sort()).toEqual(["high", "medium"]);
+  });
+
+  it("keeps the exception list free of stale entries", () => {
+    const stale = [...SEVERITY_EXCEPTIONS.keys()].filter((id) => !inCode.has(id));
+    expect(stale, `SEVERITY_EXCEPTIONS lists ids the code never reports: ${stale}`).toEqual([]);
   });
 
   it.each(["dynamic", 'flag ? "high" : dynamic', '"unknown"', "undefined"])(

@@ -38,7 +38,11 @@ export function validateSource(input: {
   }
   const commit = input.commit.toLowerCase();
   if (!COMMIT_RE.test(commit)) {
-    throw new ToolError(`Commit must be a full 40-character SHA, got "${input.commit}"`);
+    const short = commit.length >= 4 && commit.length < 40 && !/[^0-9a-f]/.test(commit);
+    const hint = short
+      ? ` (a short SHA; run git rev-parse ${input.commit} in a clone of the repository, or copy the full SHA from the commit page on GitHub)`
+      : "";
+    throw new ToolError(`Commit must be a full 40-character SHA, got "${input.commit}"${hint}`);
   }
   if (input.workflowPath !== undefined) {
     const p = input.workflowPath;

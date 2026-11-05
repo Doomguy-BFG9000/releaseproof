@@ -56,6 +56,34 @@ describe("validateSource", () => {
       ).toThrow(/relative to the repository/);
     }
   });
+
+  it.each(["a75606a", "ABCD", "a".repeat(39)])(
+    "explains how to expand the short hex commit %s without accepting it",
+    (short) => {
+      expect(() =>
+        validateSource({ repository: "https://github.com/o/r", commit: short, verified: false }),
+      ).toThrow(
+        `Commit must be a full 40-character SHA, got "${short}" (a short SHA; run git rev-parse ${short} in a clone of the repository, or copy the full SHA from the commit page on GitHub)`,
+      );
+    },
+  );
+
+  it.each(["main", "abc", "abcg", "a".repeat(41), "abcd;echo unsafe", "abcd\n"])(
+    "retains the plain rejection for values that are not short hex SHAs: %j",
+    (bad) => {
+      expect(() =>
+        validateSource({ repository: "https://github.com/o/r", commit: bad, verified: false }),
+      ).toThrow(`Commit must be a full 40-character SHA, got "${bad}"`);
+      try {
+        validateSource({ repository: "https://github.com/o/r", commit: bad, verified: false });
+      } catch (error) {
+        expect(error).toBeInstanceOf(ToolError);
+        expect((error as Error).message).toBe(
+          `Commit must be a full 40-character SHA, got "${bad}"`,
+        );
+      }
+    },
+  );
 });
 
 describe("sourceFromProvenance", () => {

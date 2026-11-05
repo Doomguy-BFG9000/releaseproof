@@ -84,6 +84,10 @@ release workflow (the workflow's own choice is the most faithful signal), `.nvmr
 `node:<major>-bookworm` (full image: has git, python3, make, g++ for native addons). The
 image digest actually used is recorded in the report. `--image` overrides.
 
+If Docker reports a missing image or manifest, the tool error names the image and suggests
+`--node` with a supported major or an explicit `--image`; not every major has a bookworm
+image. Network, authentication and platform-mismatch failures keep their raw Docker detail.
+
 **Build command.** If the package has a `build` script: pnpm → `pnpm --filter "<name>..." run
 build` (builds workspace dependencies first, topologically); Yarn Berry → `yarn workspaces
 foreach -Rt --from "<name>" run build`; npm workspaces / Yarn classic → the root `build`

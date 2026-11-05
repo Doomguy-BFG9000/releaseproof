@@ -109,7 +109,28 @@ export function createDockerClient(options: ExecaDockerOptions = {}): DockerClie
       }
     },
     async pull(image) {
-      await docker(["pull", "--quiet", image], 15 * 60_000);
+      try {
+        await docker(["pull", "--quiet", image], 15 * 60_000);
+      } catch (error) {
+        const detail = errorMessage(error);
+        const escapedImage = image.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        // Do not mistake a proxy's HTTP 404 or a platform mismatch for a missing image.
+        const imageNotFound = new RegExp(
+          String.raw`(?:^|:\s+)(?:image\s+)?["']?(?:[\w.:-]+/)*${escapedImage}["']?:?\s+not found(?:$|:)`,
+          "im",
+        );
+        if (
+          error instanceof ToolError &&
+          (/\bmanifest (?:unknown\b|for \S+ not found(?:$|:))/im.test(detail) ||
+            imageNotFound.test(detail))
+        ) {
+          throw new ToolError(
+            `image ${JSON.stringify(image)} does not exist; pick a supported Node major with --node, or name an image with --image`,
+            { cause: error },
+          );
+        }
+        throw error;
+      }
     },
     async imageDigest(image) {
       try {

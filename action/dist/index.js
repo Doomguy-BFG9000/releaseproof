@@ -73225,7 +73225,23 @@ function createDockerClient(options = {}) {
       }
     },
     async pull(image) {
-      await docker(["pull", "--quiet", image], 15 * 6e4);
+      try {
+        await docker(["pull", "--quiet", image], 15 * 6e4);
+      } catch (error2) {
+        const detail = errorMessage(error2);
+        const escapedImage = image.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const imageNotFound = new RegExp(
+          String.raw`(?:^|:\s+)(?:image\s+)?["']?(?:[\w.:-]+/)*${escapedImage}["']?:?\s+not found(?:$|:)`,
+          "im"
+        );
+        if (error2 instanceof ToolError && (/\bmanifest (?:unknown\b|for \S+ not found(?:$|:))/im.test(detail) || imageNotFound.test(detail))) {
+          throw new ToolError(
+            `image ${JSON.stringify(image)} does not exist; pick a supported Node major with --node, or name an image with --image`,
+            { cause: error2 }
+          );
+        }
+        throw error2;
+      }
     },
     async imageDigest(image) {
       try {

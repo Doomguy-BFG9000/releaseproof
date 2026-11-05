@@ -22,6 +22,8 @@ describe("normalizeGithubRepository", () => {
 
   it.each([
     "HTTPS://GITHUB.COM/O/R",
+    "GIT+HTTPS://GITHUB.COM/O/R.GIT",
+    "GITHUB:o/r",
     "https://www.github.com/o/r",
     "git+ssh://git@github.com/o/r.git",
     "  https://github.com/o/r  ",
@@ -42,6 +44,10 @@ describe("normalizeGithubRepository", () => {
     "https://github.com/-o/r",
     "https://github.com/o-/r",
     "https://g\u0456thub.com/o/r",
+    "https://github.com/\u212A/r",
+    "https://\u212Aithub.com/o/r",
+    "https://github.\u017Fom/o/r",
+    "https://g\u0131thub.com/o/r",
   ])("rejects the look-alike or malformed GitHub URL %j", (input) => {
     expect(normalizeGithubRepository(input)).toBeUndefined();
   });

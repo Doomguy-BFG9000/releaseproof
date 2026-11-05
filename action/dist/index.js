@@ -73300,8 +73300,15 @@ function parsePackage(value) {
   if (!isRecord7(value) || typeof value.dir !== "string") {
     throw new InspectionError("package entry is malformed");
   }
+  if (value.dir.includes("\0")) {
+    throw new InspectionError("package directory contains NUL");
+  }
   if (value.dir.startsWith("/") || value.dir.split("/").includes("..")) {
     throw new InspectionError(`package directory "${value.dir}" is not inside the repository`);
+  }
+  const publishConfig = isRecord7(value.publishConfig) ? value.publishConfig : void 0;
+  if (typeof publishConfig?.directory === "string" && publishConfig.directory.includes("\0")) {
+    throw new InspectionError("publishConfig.directory contains NUL");
   }
   return {
     dir: value.dir,
@@ -73310,7 +73317,7 @@ function parsePackage(value) {
     private: typeof value.private === "boolean" ? value.private : void 0,
     scripts: stringRecord(value.scripts),
     packageManager: optionalString2(value.packageManager),
-    publishConfig: isRecord7(value.publishConfig) ? value.publishConfig : void 0,
+    publishConfig,
     engines: stringRecord(value.engines),
     hasWorkspaces: typeof value.hasWorkspaces === "boolean" ? value.hasWorkspaces : void 0,
     lockfiles: Array.isArray(value.lockfiles) ? value.lockfiles.filter((entry) => typeof entry === "string") : void 0

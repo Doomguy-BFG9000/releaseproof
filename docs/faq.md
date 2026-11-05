@@ -5,6 +5,82 @@ and report format, see [docs/rules.md](rules.md) and [docs/json-report.md](json-
 
 ---
 
+## How do I read the text report?
+
+This is the text printed by a successful [Action self-test for `sigstore@5.0.0`](https://github.com/ujjwalv01/releaseproof/actions/runs/42051574936/job/127328739061).
+Timing and the container image digest can change between runs.
+
+```text
+releaseproof check sigstore@5.0.0
+
+Package      sigstore@5.0.0 (registry.npmjs.org), 9 files, sha512 849a897e81bf…
+Provenance   VERIFIED  sigstore/sigstore-js@7d2900e on refs/heads/main
+             workflow .github/workflows/release.yml, trigger push, github-hosted runner
+             log https://search.sigstore.dev/?logIndex=1697019812, integrated 2026-06-01T21:02:50.000Z
+Rebuild      OK (43s)  node:22-bookworm, npm 10.9.9, build: "build" script of packages/client (run from the root)
+             image digest node@sha256:e273cf2a19c7334c…
+Files        9 identical, 0 changed, 0 only in release, 0 only in rebuild
+
+Findings     none
+
+Verdict: MATCHES SOURCE: 9 files identical to a clean build of sigstore/sigstore-js@7d2900e
+```
+
+Read it from top to bottom:
+
+| Line | Meaning |
+| --- | --- |
+| `releaseproof check …` | The heading identifies the package and version being checked; it does not repeat all command-line options. |
+| `Package` | The package/version, registry host, number of non-directory entries in the release tarball, and an abbreviated SHA-512 of that tarball. A staged version also has `staged` beside the registry host. |
+| `Provenance VERIFIED` | The provenance's Sigstore signature and its subject's match to the downloaded tarball were verified; the repository, shortened commit and ref come from the certificate. This verifies the source identity, not that the source is harmless or that the rebuild matches. |
+| `workflow …, trigger …, … runner` | Known certificate details: which workflow built the release, which event triggered it, and whether its runner was GitHub-hosted or self-hosted. Missing details are omitted. |
+| `log https://search.sigstore.dev/…` | A link to the verified bundle's Rekor transparency-log entry by log index, with its integration time in UTC when that time is valid. This is the provenance entry's timestamp, not the time of this check; the line is omitted without a valid log index. |
+| `Rebuild OK (43s)` | The rebuild succeeded, taking 43 seconds; the rest names the Docker image tag, package manager/version and selected build script. This duration covers the rebuild, not the whole check. |
+| `image digest …` | The exact Docker image used, identified by its content digest rather than its movable tag; it pins the container image, not the package tarball. The text abbreviates the digest; [the JSON report](json-report.md#rebuild) keeps it in full, and the line is absent if Docker did not provide one. |
+| `Files` | Counts of non-directory paths: identical entries, entries present in both but changed, entries only in the release, and entries only in the rebuild. Archive metadata such as timestamps, ownership and ordering is ignored; permission-only differences have a separate ignored count when present (see [normalization and verdict rules](rules.md#verdict)). |
+| `Findings none` | No rules produced findings for this check; otherwise this line gives the total and counts by severity. Each finding below it has a severity and rule id, a title, a distinct detail when available, and relevant paths or text patches; [docs/rules.md](rules.md) explains the ids and severities. |
+| `Verdict:` | The overall decision and its main reason; additional reasons appear on indented lines below it. Findings feed this decision, so matching file counts alone do not guarantee `MATCHES SOURCE`. |
+
+Other checks can print these alternatives or continuation lines:
+
+- **Provenance:** `MISSING`, `INVALID` or `UNSUPPORTED` is followed by any problems,
+  separated by semicolons; consult [the provenance fields](json-report.md#provenance).
+  These are provenance statuses, separate from the overall verdict.
+- **Staged provenance:** `found in the Rekor transparency log; the registry hides it until approval`
+  means the provenance was recovered by the staged tarball's digest and verified, rather
+  than served by the registry; merely finding a log entry is not enough to certify it.
+- **Rebuild:** `not run` means no rebuild result is available (`not run (no source)` when
+  there was no source); `FAILED` gives the duration when known and the failure reason.
+  A failure can include the image digest and `last output of the … stage:`, followed by
+  up to 20 nonblank lines from the last failed or timed-out stage.
+- **Named source:** after an `OK` rebuild, `from … as given by --repo/--commit` means you
+  chose the reference repository/commit and provenance did not certify that choice.
+  The verdict's reason also marks a matching source as named by you.
+- **Files without a comparison:** `… in the release; nothing to compare with` counts the
+  release entries only; it does not say that they match a rebuild.
+- **Finding continuations:** paths and patches are indented under their finding; patches
+  run from rebuild to release, so `+` means added in the release. By default the text
+  shows at most 10 paths and 40 patch lines per patch, with `… more` or
+  `… more lines (see --json)` for the rest; use [the full JSON fields](json-report.md#verdict)
+  for the complete paths and attached evidence.
+
+The three verdicts are:
+
+- `MATCHES SOURCE` (exit 0): files match after normalization, with no critical or high
+  finding; lower-severity findings may still need attention.
+- `DIFFERS FROM SOURCE` (exit 1): once the source, successful rebuild and readable
+  comparison are available, a comparison mismatch or a critical/high finding requires
+  attention, even if the file counts otherwise match. It does not decide whether a difference was malicious.
+- `COULD NOT VERIFY` (exit 2): verification could not finish; it is never **safe**,
+  and any findings still need attention. A missing source, failed rebuild or unreadable
+  tarball takes priority over critical/high findings and still yields this verdict.
+
+See [docs/rules.md](rules.md#verdict) for the decision rules and
+[docs/json-report.md](json-report.md) for every full-length field. The text layout comes
+from [`packages/core/src/report/text.ts`](../packages/core/src/report/text.ts).
+
+---
+
 ## Why do I get `COULD NOT VERIFY` for a package without provenance, and what do `--repo` and `--commit` change?
 
 `COULD NOT VERIFY` means releaseproof could not finish the check, so it gives no verdict

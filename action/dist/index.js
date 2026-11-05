@@ -64374,6 +64374,11 @@ var VERSION_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 function parseSpec(input) {
   const at2 = input.lastIndexOf("@");
   if (at2 <= 0) {
+    if (input.length <= 214 && NAME_RE.test(input)) {
+      throw new ToolError(
+        `Give an exact version: ${input}@<version>, for example ${input}@1.2.3 (npm view ${input} version prints the latest)`
+      );
+    }
     throw new ToolError(`Expected <name>@<version>, got "${input}"`);
   }
   const name = input.slice(0, at2);

@@ -1,4 +1,4 @@
-import type { CheckReport } from "@releaseproof/core";
+import { type CheckReport, type Finding, sortFindings } from "@releaseproof/core";
 
 /** GitHub truncates issue bodies above this; keep a margin for our own framing. */
 export const ISSUE_BODY_LIMIT = 60_000;
@@ -8,6 +8,23 @@ const HEADINGS = {
   "differs-from-source": "🚨 DIFFERS FROM SOURCE",
   "could-not-verify": "⚠️ COULD NOT VERIFY",
 } as const;
+
+function findingBullets(findings: Finding[]): string[] {
+  const groups = new Map<string, { severity: Finding["severity"]; count: number }>();
+  for (const { id, severity } of sortFindings(findings)) {
+    const group = groups.get(id);
+    if (group) {
+      group.count += 1;
+    } else {
+      // Sorted first: a repeated id keeps its most severe occurrence.
+      groups.set(id, { severity, count: 1 });
+    }
+  }
+  return [...groups].map(
+    ([id, { severity, count }]) =>
+      `- **${severity}** [\`${id}\`](https://github.com/ujjwalv01/releaseproof/blob/main/docs/rules.md)${count > 1 ? ` (${count})` : ""}\n`,
+  );
+}
 
 /**
  * A fence longer than any backtick run inside the text, so untrusted content (file paths,
@@ -63,6 +80,27 @@ export function renderMarkdown(
   const fence = fenceFor(textReport);
   const frame = `${fence}text\n`;
   const close = `\n${fence}\n\n${footer}\n`;
+  const list = findingBullets(report.verdict.findings);
+  if (list.length > 0) {
+    const available = maxChars - body.length - frame.length - close.length - 80;
+    const fullList = `${list.join("")}\n`;
+    if (fullList.length <= available) {
+      body += fullList;
+    } else {
+      const notice = "… finding list truncated; the JSON report has everything\n\n";
+      let used = notice.length;
+      for (const bullet of list) {
+        if (used + bullet.length > available) {
+          break;
+        }
+        body += bullet;
+        used += bullet.length;
+      }
+      if (used <= available) {
+        body += notice;
+      }
+    }
+  }
   const budget = maxChars - body.length - frame.length - close.length - 80;
   let text = textReport;
   if (text.length > budget) {

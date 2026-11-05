@@ -75452,6 +75452,21 @@ var HEADINGS = {
   "differs-from-source": "\u{1F6A8} DIFFERS FROM SOURCE",
   "could-not-verify": "\u26A0\uFE0F COULD NOT VERIFY"
 };
+function findingBullets(findings) {
+  const groups = /* @__PURE__ */ new Map();
+  for (const { id, severity } of sortFindings(findings)) {
+    const group = groups.get(id);
+    if (group) {
+      group.count += 1;
+    } else {
+      groups.set(id, { severity, count: 1 });
+    }
+  }
+  return [...groups].map(
+    ([id, { severity, count: count3 }]) => `- **${severity}** [\`${id}\`](https://github.com/ujjwalv01/releaseproof/blob/main/docs/rules.md)${count3 > 1 ? ` (${count3})` : ""}
+`
+  );
+}
 function fenceFor(text) {
   let longest = 0;
   for (const run of text.match(/`+/g) ?? []) {
@@ -75490,6 +75505,28 @@ ${fence}
 
 ${footer}
 `;
+  const list = findingBullets(report.verdict.findings);
+  if (list.length > 0) {
+    const available = maxChars - body.length - frame.length - close.length - 80;
+    const fullList = `${list.join("")}
+`;
+    if (fullList.length <= available) {
+      body += fullList;
+    } else {
+      const notice = "\u2026 finding list truncated; the JSON report has everything\n\n";
+      let used = notice.length;
+      for (const bullet of list) {
+        if (used + bullet.length > available) {
+          break;
+        }
+        body += bullet;
+        used += bullet.length;
+      }
+      if (used <= available) {
+        body += notice;
+      }
+    }
+  }
   const budget = maxChars - body.length - frame.length - close.length - 80;
   let text = textReport;
   if (text.length > budget) {

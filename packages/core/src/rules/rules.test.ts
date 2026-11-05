@@ -24,6 +24,17 @@ describe("runRules on the fixture packages", () => {
     expect(findings[1]?.paths).toEqual(["lib/setup.js"]);
   });
 
+  it("catches an added prepare script as high without an install finding", async () => {
+    const findings = runRules(await fixtureContext("attacked-lifecycle-script"));
+    expect(ids(findings)).toEqual(["high:lifecycle-script-added"]);
+    expect(findings[0]).toMatchObject({
+      title: 'lifecycle script added: "prepare"',
+      paths: ["package.json"],
+      evidence: { script: "prepare", command: "node -e \"console.log('prepare')\"" },
+    });
+    expect(findings.some((finding) => finding.id === "install-script-added")).toBe(false);
+  });
+
   it("catches a file the source does not produce", async () => {
     const findings = runRules(await fixtureContext("attacked-extra-file"));
     expect(ids(findings)).toEqual(["high:file-added"]);

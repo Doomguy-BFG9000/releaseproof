@@ -1,0 +1,81 @@
+name: Bug report
+description: Report a problem running releaseproof.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If releaseproof reported MATCHES SOURCE for a tampered package, do not open a public issue.
+        Follow [SECURITY.md](https://github.com/ujjwalv01/releaseproof/blob/main/SECURITY.md)
+        to report it privately. The same applies to container escapes and token leaks.
+  - type: textarea
+    id: command
+    attributes:
+      label: Command run
+      description: Include the full command and options, with tokens and other secrets removed.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: verdict
+    attributes:
+      label: Verdict
+      description: Enter the verdict, or say that no verdict was produced.
+      placeholder: COULD NOT VERIFY
+    validations:
+      required: true
+  - type: input
+    id: exit-code
+    attributes:
+      label: Exit code
+      description: Enter the process exit code, or say if it was unavailable.
+      placeholder: "2"
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: JSON report
+      description: >-
+        Run the command with --json and paste the full report. Remove tokens and other secrets
+        before posting. If no report was produced, include the error instead.
+      render: json
+    validations:
+      required: true
+  - type: input
+    id: package
+    attributes:
+      label: Package and version
+      description: Use package@version, including the scope when applicable.
+      placeholder: sigstore@5.0.0
+    validations:
+      required: true
+  - type: input
+    id: releaseproof-version
+    attributes:
+      label: releaseproof version
+      description: The output of releaseproof --version, or the checkout commit if running from source.
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: Operating system and version
+      placeholder: Ubuntu 24.04, macOS 15, or Windows 11
+    validations:
+      required: true
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version
+      description: The output of node --version.
+    validations:
+      required: true
+  - type: input
+    id: docker-version
+    attributes:
+      label: Docker version
+      description: >-
+        The output of docker --version. If unavailable, say "not installed" or describe the error.
+    validations:
+      required: true

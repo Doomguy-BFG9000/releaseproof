@@ -135,7 +135,9 @@ Rules that apply to every PR:
 
 ## Reporting a bug
 
-Open an issue with the command you ran, the full output (use `--json` for the report),
-the package and version, your OS, Node and Docker versions. If you think you found a way
+Use the [bug report form](.github/ISSUE_TEMPLATE/bug_report.yml) with the command you ran,
+the verdict and exit code, the full output (use `--json` for the report; remove tokens),
+the package and version, your releaseproof, OS, Node and Docker versions. Suggestions go in
+the [feature request form](.github/ISSUE_TEMPLATE/feature_request.yml). If you think you found a way
 to make releaseproof say MATCHES SOURCE for a tampered package, do not open a public
 issue; follow SECURITY.md.

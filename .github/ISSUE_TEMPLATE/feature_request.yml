@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest an improvement to releaseproof.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For security vulnerabilities, do not open a public issue. Follow
+        [SECURITY.md](https://github.com/ujjwalv01/releaseproof/blob/main/SECURITY.md)
+        to report them privately.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem are you trying to solve? Include a concrete example.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the change and how it would help.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Describe any alternatives or workarounds you have considered.

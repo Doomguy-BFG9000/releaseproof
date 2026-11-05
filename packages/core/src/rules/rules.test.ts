@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { fixtureContext, ruleContext } from "../../test/context.js";
 import { rawTar } from "../../test/tarballs.js";
 import { readTarball } from "../diff/tarball.js";
+import { buildVerdict } from "../verdict/verdict.js";
 import { runRules } from "./index.js";
 import type { Finding } from "./types.js";
 
@@ -84,6 +85,62 @@ describe("runRules on the fixture packages", () => {
 describe("file rules on crafted tarballs", () => {
   const clean = (files: Array<{ path: string; content?: string; mode?: number }>) =>
     readTarball(rawTar(files.map((f) => ({ ...f, path: `package/${f.path}` }))));
+
+  const withEntryKind = (type: "File" | "Directory") =>
+    readTarball(
+      rawTar([
+        { path: "package/package.json", content: "{}" },
+        { path: "package/shared", type, ...(type === "File" ? { content: "ordinary file" } : {}) },
+      ]),
+    );
+
+  it.each([
+    ["File", "Directory", "file", "directory"],
+    ["Directory", "File", "directory", "file"],
+  ] as const)(
+    "flags a %s release entry replacing a %s source entry",
+    (releaseType, sourceType, releaseKind, sourceKind) => {
+      const release = withEntryKind(releaseType);
+      const rebuilt = withEntryKind(sourceType);
+      const context = ruleContext(release, rebuilt);
+      const findings = runRules(context);
+      expect(findings.filter((finding) => finding.id === "file-type-changed")).toEqual([
+        {
+          id: "file-type-changed",
+          severity: "critical",
+          title: "file replaced by a different kind of entry",
+          detail: `shared: ${releaseKind} in the release, ${sourceKind} in the source`,
+          paths: ["shared"],
+        },
+      ]);
+      const source = {
+        repository: "https://github.com/ujjwalv01/releaseproof",
+        commit: "a".repeat(40),
+        verified: true,
+      };
+      const verdict = buildVerdict({
+        artifact: {
+          name: context.name,
+          version: context.version,
+          origin: { kind: "published", registry: "https://registry.npmjs.org/" },
+          hints: {},
+        },
+        provenance: context.provenance,
+        source,
+        rebuild: { status: "ok", source, stages: [], volume: "test" },
+        release,
+        rebuilt,
+        diff: context.diff,
+        expectations: {},
+      });
+      expect(verdict.status).toBe("differs-from-source");
+    },
+  );
+
+  it.each(["File", "Directory"] as const)("is silent for matching %s entry kinds", (kind) => {
+    const tarball = withEntryKind(kind);
+    expect(runRules(ruleContext(tarball, tarball))).toEqual([]);
+  });
 
   it("flags unexpected paths: high when the source lacks them, medium when it has them too", () => {
     const withEditor = clean([

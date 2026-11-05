@@ -5,6 +5,7 @@ import {
   formatReport,
   runCheck,
   ToolError,
+  validateImageReference,
 } from "@releaseproof/core";
 
 export interface CheckCommandOptions {
@@ -69,7 +70,7 @@ export async function runCheckCommand(
       token: options.token,
       repository: options.repo,
       commit: options.commit,
-      image: options.image,
+      image: options.image === undefined ? undefined : validateImageReference(options.image),
       nodeMajor: parseNodeMajor(options.node),
       buildCommand: options.buildCommand,
       memory: options.memory,

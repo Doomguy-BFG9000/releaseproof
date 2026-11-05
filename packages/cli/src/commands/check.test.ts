@@ -97,6 +97,31 @@ describe("runCheckCommand", () => {
   });
 });
 
+describe("runCheckCommand with --image", () => {
+  it.each(["--privileged", "node:", "node:22\n", "node\0", ""])(
+    "rejects %j before running a check",
+    async (image) => {
+      const runCheck = vi.fn(async () => fakeReport(0));
+      const streams = io();
+      expect(await runCheckCommand("x@1.0.0", { image }, streams.io, { runCheck })).toBe(2);
+      expect(runCheck).not.toHaveBeenCalled();
+      expect(streams.out).toEqual([]);
+      expect(streams.err).toEqual([
+        `error: --image must be a Docker image reference such as node:22-bookworm, got ${JSON.stringify(image)}\n`,
+      ]);
+    },
+  );
+
+  it.each(["node:22-bookworm", "registry.example.com:5000/team/node:22", undefined])(
+    "passes valid image %j through unchanged",
+    async (image) => {
+      const runCheck = vi.fn(async (_options: CheckOptions) => fakeReport(0));
+      expect(await runCheckCommand("x@1.0.0", { image }, io().io, { runCheck })).toBe(0);
+      expect(runCheck.mock.calls[0]?.[0].image).toBe(image);
+    },
+  );
+});
+
 describe("runCheckCommand with --token", () => {
   const warning =
     "warning: --token is visible in shell history and process lists; prefer NPM_TOKEN or npm login\n";

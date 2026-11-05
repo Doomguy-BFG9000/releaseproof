@@ -97,6 +97,34 @@ function fakeIo(
 }
 
 describe("runAction", () => {
+  it.each(["--privileged", "node:", "node:22\n", "node\0", "   "])(
+    "rejects image %j before running a check",
+    async (image) => {
+      const check = vi.fn(async () => reportWith("matches-source", 0));
+      const { io, actionIo } = fakeIo({ image }, check);
+      await runAction(actionIo);
+      expect(check).not.toHaveBeenCalled();
+      expect(io.failures).toEqual([
+        `Input "image" must be a Docker image reference such as node:22-bookworm, got ${JSON.stringify(image)}`,
+      ]);
+      expect(io.outputs).toEqual({});
+      expect(io.files).toEqual({});
+    },
+  );
+
+  it.each(["node:22-bookworm", "registry.example.com:5000/team/node:22", ""])(
+    "passes valid or absent image %j through",
+    async (image) => {
+      const check = vi.fn(async (_options: Parameters<ActionIo["check"]>[0]) =>
+        reportWith("matches-source", 0),
+      );
+      const { io, actionIo } = fakeIo({ image }, check);
+      await runAction(actionIo);
+      expect(check.mock.calls[0]?.[0].image).toBe(image || undefined);
+      expect(io.failures).toEqual([]);
+    },
+  );
+
   it("runs the check with the inputs, writes outputs, summary and JSON, and fails on a non-zero verdict", async () => {
     const check = vi.fn(async (_options: Parameters<ActionIo["check"]>[0]) =>
       reportWith("differs-from-source", 1),

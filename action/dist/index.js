@@ -73356,6 +73356,18 @@ function parseInspection(json2) {
 var REPO_DIR = "/work/repo";
 var OUT_DIR = "/work/out";
 var DEFAULT_NODE_MAJOR = 22;
+var IMAGE_PATH_COMPONENT = "[a-z0-9]+(?:(?:[._]|__|-+)[a-z0-9]+)*";
+var IMAGE_REFERENCE_RE = new RegExp(
+  `^(?:[A-Za-z0-9][A-Za-z0-9.-]*(?::[0-9]+)?/)?${IMAGE_PATH_COMPONENT}(?:/${IMAGE_PATH_COMPONENT})*(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$`
+);
+function validateImageReference(image, inputName = "--image") {
+  if (/\s/.test(image) || !IMAGE_REFERENCE_RE.test(image)) {
+    throw new ToolError(
+      `${inputName} must be a Docker image reference such as node:22-bookworm, got ${JSON.stringify(image)}`
+    );
+  }
+  return image;
+}
 var PACK_TIME_SCRIPTS = [
   "prepack",
   "prepare",
@@ -73493,6 +73505,7 @@ function managerArgv(manager, ...args) {
 function planBuild(input) {
   const { inspection, target } = input;
   const overrides = input.overrides ?? {};
+  if (overrides.image !== void 0) validateImageReference(overrides.image);
   const warnings = [];
   const candidates = inspection.packages.filter((pkg2) => pkg2.name === target.name);
   if (candidates.length === 0) {
@@ -73821,6 +73834,7 @@ function textTail(result, includeStdout) {
   return tail(parts.filter((part) => part.trim() !== "").join("\n"));
 }
 async function rebuildPackage(source, target, options = {}) {
+  if (options.overrides?.image !== void 0) validateImageReference(options.overrides.image);
   const docker = options.docker ?? createDockerClient();
   const timeouts = { ...DEFAULT_TIMEOUTS, ...options.timeouts };
   const memory = options.memory ?? "4g";
@@ -75408,6 +75422,7 @@ function parseInputs(getInput2, context4) {
     );
   }
   const memoryInput = getInput2("memory").trim().toLowerCase();
+  const imageInput = getInput2("image");
   if (memoryInput && !/^\d+[kmg]?$/.test(memoryInput)) {
     throw new ToolError(
       `Input "memory" must be a Docker size such as 4g or 6144m, got "${memoryInput}"`
@@ -75434,7 +75449,7 @@ function parseInputs(getInput2, context4) {
     commit: commitInput || void 0,
     registry: getInput2("registry").trim() || void 0,
     nodeMajor,
-    image: getInput2("image").trim() || void 0,
+    image: imageInput === "" ? void 0 : validateImageReference(imageInput, 'Input "image"'),
     buildCommand: getInput2("build-command").trim() || void 0,
     memory: memoryInput || void 0,
     failOn: failOnInput,
@@ -75580,7 +75595,7 @@ async function runAction(io2) {
 var workspace = process.env.GITHUB_WORKSPACE ?? process.cwd();
 var { context: context3 } = github_exports;
 await runAction({
-  getInput: (name) => getInput(name),
+  getInput: (name) => getInput(name, { trimWhitespace: name !== "image" }),
   context: {
     eventName: context3.eventName,
     repository: `${context3.repo.owner}/${context3.repo.repo}`,

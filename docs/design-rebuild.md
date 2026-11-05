@@ -82,7 +82,11 @@ unsupported in v1.
 release workflow (the workflow's own choice is the most faithful signal), `.nvmrc` /
 `.node-version`, the lowest major allowed by `engines.node`, else 22. Image:
 `node:<major>-bookworm` (full image: has git, python3, make, g++ for native addons). The
-image digest actually used is recorded in the report. `--image` overrides.
+image digest actually used is recorded in the report. `--image` overrides. The CLI and
+Action validate the override before starting a check, and the core rebuild validates it
+before any Docker call. Common names, registry ports, tags and SHA-256 digests (including
+tag-plus-digest references) are accepted. Flag-like values, whitespace/control characters
+and empty names or tags are tool errors; omitting the override keeps the detected image.
 
 **Build command.** If the package has a `build` script: pnpm → `pnpm --filter "<name>..." run
 build` (builds workspace dependencies first, topologically); Yarn Berry → `yarn workspaces

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { parseSpec, STAGE_ID_RE, ToolError } from "@releaseproof/core";
+import { parseSpec, STAGE_ID_RE, ToolError, validateImageReference } from "@releaseproof/core";
 
 export type FailOn = "non-zero" | "differs" | "never";
 
@@ -107,6 +107,7 @@ export function parseInputs(getInput: GetInput, context: ActionContext): ActionI
     );
   }
   const memoryInput = getInput("memory").trim().toLowerCase();
+  const imageInput = getInput("image");
   if (memoryInput && !/^\d+[kmg]?$/.test(memoryInput)) {
     throw new ToolError(
       `Input "memory" must be a Docker size such as 4g or 6144m, got "${memoryInput}"`,
@@ -134,7 +135,7 @@ export function parseInputs(getInput: GetInput, context: ActionContext): ActionI
     commit: commitInput || undefined,
     registry: getInput("registry").trim() || undefined,
     nodeMajor,
-    image: getInput("image").trim() || undefined,
+    image: imageInput === "" ? undefined : validateImageReference(imageInput, 'Input "image"'),
     buildCommand: getInput("build-command").trim() || undefined,
     memory: memoryInput || undefined,
     failOn: failOnInput,

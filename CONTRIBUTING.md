@@ -128,6 +128,7 @@ Docker flags or the planner need a unit test and, when they affect real packages
 Rules that apply to every PR:
 
 - Third-party GitHub Actions in workflows are pinned to full commit SHAs, never tags.
+- Dependabot keeps these action pins up to date in a weekly grouped PR, reviewed like any other PR.
 - No new runtime dependency without an issue discussing it first; the CLI is bundled and
   every dependency ships to every user.
 - Nothing in the repository may execute package contents on the host, phone home, or

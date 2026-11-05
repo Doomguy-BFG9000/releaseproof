@@ -113,6 +113,7 @@ NPM_TOKEN=<token> npx releaseproof check @myorg/pkg@1.2.3 --registry https://npm
 ```
 
 Tokens in `.npmrc` are matched by registry host and path (`//npm.example.com/:_authToken=...`).
+Tokens require HTTPS except on `localhost`, `127.0.0.1` or `::1`; HTTP requests without a token remain allowed.
 The `registry=` and `@scope:registry=` lines of `.npmrc` are not read yet, so `--registry` is
 needed every time (tracked in #9 and #33).
 

@@ -105,6 +105,68 @@ describe("file rules on crafted tarballs", () => {
     expect(medium.map((f) => f.severity)).toEqual(["medium", "medium"]);
   });
 
+  it.each([
+    "server.key",
+    "certs/server.pem",
+    "certs/client.p12",
+    "client.pfx",
+    "certs/SERVER.KEY",
+    "id_rsa",
+    "nested/id_rsa",
+    ".git-credentials",
+    "nested/.git-credentials",
+    ".netrc",
+    "nested/.netrc",
+    ".ssh/id_rsa",
+    "nested/.ssh/id_rsa",
+    ".aws/credentials",
+    "nested/.aws/config",
+    ".docker/config.json",
+    "nested/.docker/config.json",
+    ".kube/config",
+    "nested/.kube/config",
+  ])("flags credential-looking path %s even when the rebuild contains it", (path) => {
+    const release = clean([{ path, content: "credential fixture" }]);
+    const without = clean([{ path: "package.json", content: "{}" }]);
+    for (const [rebuild, severity] of [
+      [without, "high"],
+      [release, "medium"],
+      [undefined, "high"],
+    ] as const) {
+      const findings = runRules(ruleContext(release, rebuild)).filter(
+        (finding) => finding.id === "unexpected-path",
+      );
+      expect(findings).toHaveLength(1);
+      expect(findings[0]).toMatchObject({ severity, paths: [path] });
+      expect(findings[0]?.detail).toContain("credential");
+    }
+  });
+
+  it("does not flag similar names outside credential path boundaries", () => {
+    const release = clean(
+      [
+        "lib/keyring.js",
+        "lib/monkey",
+        "server.key.js",
+        "cert.pem.bak",
+        "client.p12.txt",
+        "id_rsa.pub",
+        "not_id_rsa",
+        ".git-credentials.example",
+        "my.netrc",
+        ".ssh-config/id_rsa.pub",
+        ".awsome/config",
+        ".kubernetes/config",
+        ".docker/config.json.bak",
+        ".docker/configuration.json",
+        "docker/config.json",
+      ].map((path) => ({ path, content: "ordinary fixture" })),
+    );
+    expect(
+      runRules(ruleContext(release, release)).filter((finding) => finding.id === "unexpected-path"),
+    ).toEqual([]);
+  });
+
   it("flags tarball problems as critical even when files match", () => {
     const release = readTarball(
       rawTar([

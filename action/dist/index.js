@@ -74163,7 +74163,11 @@ var UNEXPECTED_PATHS = [
     pattern: /^\.(env|npmrc|yarnrc|yarnrc\.yml)$/,
     why: "config files that can carry credentials or change how tools behave"
   },
-  { pattern: /^\.husky\//, why: "git hooks run commands" }
+  { pattern: /^\.husky\//, why: "git hooks run commands" },
+  {
+    pattern: /\.(pem|key|p12|pfx)$|(^|\/)(id_rsa|\.git-credentials|\.netrc)$|(^|\/)\.(ssh|aws|kube)\/|(^|\/)\.docker\/config\.json$/i,
+    why: "private keys and credential files must never ship in a package"
+  }
 ];
 var NATIVE_PATTERNS = /(^|\/)binding\.gyp$|\.(node|so|dll|dylib|exe|a|lib)$/i;
 var ASSET_EXTENSIONS = /* @__PURE__ */ new Set([

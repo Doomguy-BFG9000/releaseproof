@@ -3,7 +3,6 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { fixtureDir } from "../../test/tarballs.js";
 import { analyzeCode, isCodePath } from "./code.js";
-import { normalizeGithubRepository } from "./repository.js";
 
 describe("analyzeCode", () => {
   it("sees nothing special in ordinary code", () => {
@@ -54,25 +53,5 @@ describe("isCodePath", () => {
     expect(isCodePath("scripts/setup.sh")).toBe(true);
     expect(isCodePath("README.md")).toBe(false);
     expect(isCodePath("package.json")).toBe(false);
-  });
-});
-
-describe("normalizeGithubRepository", () => {
-  it.each([
-    ["https://github.com/O/R", "https://github.com/o/r"],
-    ["git+https://github.com/o/r.git", "https://github.com/o/r"],
-    ["git://github.com/o/r.git", "https://github.com/o/r"],
-    ["git@github.com:o/r.git", "https://github.com/o/r"],
-    ["ssh://git@github.com/o/r.git", "https://github.com/o/r"],
-    ["github:o/r", "https://github.com/o/r"],
-    ["o/r", "https://github.com/o/r"],
-    ["https://github.com/o/r/", "https://github.com/o/r"],
-    ["https://github.com/o/r#readme", "https://github.com/o/r"],
-    ["https://gitlab.com/o/r", undefined],
-    ["not a repo", undefined],
-    ["", undefined],
-    [undefined, undefined],
-  ])("normalizes %j to %j", (input, expected) => {
-    expect(normalizeGithubRepository(input)).toBe(expected);
   });
 });

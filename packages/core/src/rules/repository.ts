@@ -14,7 +14,7 @@ export function normalizeGithubRepository(value: string | undefined): string | u
     return `https://github.com/${shorthand[1]}/${shorthand[2]}`.toLowerCase();
   }
   const url =
-    /^(?:https?:\/\/|git:\/\/|ssh:\/\/(?:git@)?|git@)(?:www\.)?github\.com[/:]([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?(?:[#?].*)?$/.exec(
+    /^(?:https?:\/\/|git:\/\/|ssh:\/\/(?:git@)?|git@)(?:www\.)?github\.com[/:]([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?(?:[#?].*)?$/i.exec(
       text,
     );
   if (url) {

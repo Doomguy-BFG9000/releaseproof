@@ -85,6 +85,23 @@ describe("compareTarballs", () => {
     ]);
   });
 
+  it("catches the native-addon placeholder while preserving every clean file", async () => {
+    const result = await compareFixtures("attacked-native-addon", "clean");
+    expect(result.matches).toBe(false);
+    expect(result.onlyInRelease).toEqual([
+      expect.objectContaining({
+        path: "build/Release/addon.node",
+        kind: "file",
+        text: false,
+        size: 4,
+      }),
+    ]);
+    expect(result.identical).toHaveLength(5);
+    expect(result.changed).toEqual([]);
+    expect(result.onlyInRebuild).toEqual([]);
+    expect(result.release.bytes).toBe(result.rebuild.bytes + 4);
+  });
+
   it("labels line-ending-only changes as whitespace, with a patch", () => {
     const release = readTarball(
       rawTar([{ path: "package/a.js", content: "x = 1;\r\ny = 2;\r\n" }]),

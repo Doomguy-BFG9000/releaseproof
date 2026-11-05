@@ -53,6 +53,21 @@ describe("runRules on the fixture packages", () => {
     expect(findings[0]?.paths).toEqual(["build/Release/native.node"]);
   });
 
+  it("flags the native-addon fixture without double-counting it as a generic binary", async () => {
+    const context = await fixtureContext("attacked-native-addon");
+    expect(context.release.entries.get("build/Release/addon.node")?.content).toEqual(
+      Buffer.from([0, 0x4e, 0x41, 0]),
+    );
+    const findings = runRules(context);
+    // Native extensions are excluded from binary-added, even when their bytes are binary.
+    expect(ids(findings)).toEqual(["critical:native-code-added", "high:file-added"]);
+    expect(findings.map((finding) => finding.paths)).toEqual([
+      ["build/Release/addon.node"],
+      ["build/Release/addon.node"],
+    ]);
+    expect(findings[1]?.evidence).toEqual({ "build/Release/addon.node": "4 bytes, binary" });
+  });
+
   it("catches obfuscated code the source does not produce as critical", async () => {
     const findings = runRules(await fixtureContext("attacked-obfuscated"));
     expect(ids(findings)).toEqual(["critical:obfuscated-code-added", "high:file-added"]);

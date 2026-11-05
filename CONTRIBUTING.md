@@ -18,6 +18,37 @@ pnpm build
 Opt-in tests that talk to the real world: `RELEASEPROOF_NET_TESTS=1` (registry, Sigstore)
 and `RELEASEPROOF_DOCKER_TESTS=1` (real rebuilds). CI runs them weekly.
 
+### Troubleshooting: Corepack cannot start pnpm 12
+
+If `pnpm` fails before installation with an error like:
+
+```text
+Error: Cannot find module '.../corepack/v1/pnpm/12.14.0/bin/pnpm.cjs'
+```
+
+Older Corepack versions look for `bin/pnpm.cjs`, but pnpm 12 uses the
+`bin/pnpm.mjs` launcher for its native executable. Update Corepack and recreate
+the pnpm shims, then retry from the repository root:
+
+```sh
+npm install -g corepack@0.34.6
+corepack enable pnpm
+pnpm --version        # 12.14.0, from package.json
+pnpm install
+pnpm check
+```
+
+Tested on Windows with Node 22.22.0: bundled Corepack 0.34.0 reproduced the error,
+and Corepack 0.34.6 restored `pnpm install` and `pnpm check`. The explicit version
+also avoids installing a newer Corepack whose Node engine range excludes
+22.22.0; check that range before choosing a different version. See the
+[Corepack installation notes](https://github.com/nodejs/corepack#manual-installs)
+if an existing Windows MSI installation prevents the update.
+
+CI selects current Node 22 and 24 releases through `actions/setup-node`, rather
+than pinning Node 22.22.0. It still runs `corepack enable pnpm`, so the same
+compatible Corepack update applies if a runner ever shows this error.
+
 ## Principles that every change must keep
 
 - **Deterministic.** No LLMs, no heuristics that depend on time or environment. Same input,

@@ -135,9 +135,13 @@ Rules that apply to every PR:
 
 ## Reporting a bug
 
-Use the [bug report form](.github/ISSUE_TEMPLATE/bug_report.yml) with the command you ran,
-the verdict and exit code, the full output (use `--json` for the report; remove tokens),
-the package and version, your releaseproof, OS, Node and Docker versions. Suggestions go in
-the [feature request form](.github/ISSUE_TEMPLATE/feature_request.yml). If you think you found a way
-to make releaseproof say MATCHES SOURCE for a tampered package, do not open a public
-issue; follow SECURITY.md.
+Use the [bug report form](https://github.com/ujjwalv01/releaseproof/issues/new?template=bug_report.yml).
+It asks for what happened, the command or workflow step, the verdict and exit code, the
+`--json` report (remove tokens first), the package and version, and your releaseproof, OS,
+Node and Docker versions. Ideas go in the
+[feature request form](https://github.com/ujjwalv01/releaseproof/issues/new?template=feature_request.yml).
+
+If you think you found a way to make releaseproof say MATCHES SOURCE for a tampered
+package, escape the build container, or leak a token, do not open a public issue:
+[report it privately](https://github.com/ujjwalv01/releaseproof/security/advisories/new)
+as described in [SECURITY.md](./SECURITY.md).

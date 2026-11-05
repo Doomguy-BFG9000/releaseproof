@@ -1,74 +1,112 @@
 name: Bug report
-description: Report a problem running releaseproof.
+description: releaseproof crashed, gave a wrong verdict, or could not verify a package it should handle.
 labels: [bug]
 body:
   - type: markdown
     attributes:
       value: |
-        If releaseproof reported MATCHES SOURCE for a tampered package, do not open a public issue.
-        Follow [SECURITY.md](https://github.com/ujjwalv01/releaseproof/blob/main/SECURITY.md)
-        to report it privately. The same applies to container escapes and token leaks.
+        **Security problems go to a private report, not here.** If releaseproof said
+        MATCHES SOURCE for a tampered package, if a build could escape its container, or if
+        a token could leak, [report it privately](https://github.com/ujjwalv01/releaseproof/security/advisories/new)
+        as described in [SECURITY.md](https://github.com/ujjwalv01/releaseproof/blob/main/SECURITY.md).
+
+        Everything you paste below is public. Remove tokens, and private registry URLs or
+        package names you do not want to share.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of problem is it?
+      options:
+        - DIFFERS FROM SOURCE for a release I believe was built from its source (false alarm)
+        - COULD NOT VERIFY for a package that should rebuild
+        - Crash or error message (exit code 2 with an "error:" line)
+        - Problem with the GitHub Action
+        - Something else
+    validations:
+      required: true
+  - type: dropdown
+    id: how
+    attributes:
+      label: How did you run releaseproof?
+      options:
+        - npx releaseproof / installed CLI
+        - CLI built from a checkout of this repository
+        - GitHub Action (ujjwalv01/releaseproof)
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what did you expect?
+      description: >-
+        For a false alarm, say why you believe the release matches its source, for example
+        which finding looks wrong and why.
+    validations:
+      required: true
   - type: textarea
     id: command
     attributes:
-      label: Command run
-      description: Include the full command and options, with tokens and other secrets removed.
-      render: shell
+      label: Command or workflow step
+      description: >-
+        The full command with its options, or for the Action the workflow step with its
+        inputs. Remove tokens and other secrets.
+      placeholder: npx releaseproof check sigstore@5.0.0 --json > report.json
+      render: text
     validations:
       required: true
-  - type: input
+  - type: dropdown
     id: verdict
     attributes:
-      label: Verdict
-      description: Enter the verdict, or say that no verdict was produced.
-      placeholder: COULD NOT VERIFY
-    validations:
-      required: true
-  - type: input
-    id: exit-code
-    attributes:
-      label: Exit code
-      description: Enter the process exit code, or say if it was unavailable.
-      placeholder: "2"
-    validations:
-      required: true
-  - type: textarea
-    id: report
-    attributes:
-      label: JSON report
-      description: >-
-        Run the command with --json and paste the full report. Remove tokens and other secrets
-        before posting. If no report was produced, include the error instead.
-      render: json
+      label: Verdict and exit code
+      description: If the exit code did not match the verdict, say so above.
+      options:
+        - MATCHES SOURCE (exit 0)
+        - DIFFERS FROM SOURCE (exit 1)
+        - COULD NOT VERIFY (exit 2)
+        - No verdict, an "error:" line (exit 2)
+        - No verdict, something else (describe it above)
     validations:
       required: true
   - type: input
     id: package
     attributes:
       label: Package and version
-      description: Use package@version, including the scope when applicable.
+      description: package@version, with the scope when there is one. For a staged version, add the stage id.
       placeholder: sigstore@5.0.0
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: JSON report or error output
+      description: >-
+        Run the same command with `--json` and attach the file by dragging it into this
+        box (reports with patches are often too long to paste), or paste a short one inside
+        a ```json block. With the Action, attach the file named by its `report-path` input.
+        If no report was written, paste the error output instead.
     validations:
       required: true
   - type: input
     id: releaseproof-version
     attributes:
       label: releaseproof version
-      description: The output of releaseproof --version, or the checkout commit if running from source.
+      description: The output of `releaseproof --version`, the Action ref you use, or your checkout's commit.
+      placeholder: 0.2.1
     validations:
       required: true
   - type: input
     id: os-version
     attributes:
-      label: Operating system and version
-      placeholder: Ubuntu 24.04, macOS 15, or Windows 11
+      label: Operating system
+      placeholder: Ubuntu 24.04, macOS 15, Windows 11, or the GitHub runner image
     validations:
       required: true
   - type: input
     id: node-version
     attributes:
       label: Node.js version
-      description: The output of node --version.
+      description: The output of `node --version`.
+      placeholder: v22.12.0
     validations:
       required: true
   - type: input
@@ -76,6 +114,17 @@ body:
     attributes:
       label: Docker version
       description: >-
-        The output of docker --version. If unavailable, say "not installed" or describe the error.
+        The output of `docker version --format '{{.Server.Version}}'`, or "not installed",
+        or the error you got.
+      placeholder: 29.8.2
     validations:
       required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you submit
+      options:
+        - label: I removed tokens and anything else private from this report.
+          required: true
+        - label: I searched the existing issues for this problem.
+          required: true

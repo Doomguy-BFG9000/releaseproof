@@ -1,5 +1,7 @@
 blank_issues_enabled: true
 contact_links:
   - name: releaseproof reported MATCHES SOURCE for a tampered package
-    url: https://github.com/ujjwalv01/releaseproof/blob/main/SECURITY.md
-    about: Follow the security policy to report this privately instead of opening a public issue.
+    url: https://github.com/ujjwalv01/releaseproof/security/advisories/new
+    about: >-
+      Report it privately, along with container escapes and token leaks. See SECURITY.md for
+      what to include.

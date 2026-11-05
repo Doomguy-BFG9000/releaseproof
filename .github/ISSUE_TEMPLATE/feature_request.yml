@@ -1,29 +1,58 @@
 name: Feature request
-description: Suggest an improvement to releaseproof.
+description: Suggest an improvement to the CLI, the GitHub Action, the rules or the docs.
 labels: [enhancement]
 body:
   - type: markdown
     attributes:
       value: |
-        For security vulnerabilities, do not open a public issue. Follow
-        [SECURITY.md](https://github.com/ujjwalv01/releaseproof/blob/main/SECURITY.md)
-        to report them privately.
+        releaseproof keeps a few promises that shape every feature: verdicts are
+        deterministic (no LLM, no API key, no server), anything that cannot be verified is
+        reported as "could not verify" and never as safe, package code never runs on the
+        host, and nothing is sent anywhere as telemetry. Proposals that would break one of
+        these will be declined, so please check against them first.
+
+        For security vulnerabilities, [report privately](https://github.com/ujjwalv01/releaseproof/security/advisories/new)
+        instead, as described in [SECURITY.md](https://github.com/ujjwalv01/releaseproof/blob/main/SECURITY.md).
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of releaseproof?
+      multiple: true
+      options:
+        - CLI
+        - GitHub Action
+        - Rebuild (Docker, package managers, monorepos)
+        - Rules and verdict
+        - Provenance and Sigstore
+        - Registry, tokens and staged publishing
+        - Report output (text or JSON)
+        - Documentation
+    validations:
+      required: true
   - type: textarea
     id: problem
     attributes:
       label: Problem
-      description: What problem are you trying to solve? Include a concrete example.
+      description: >-
+        What are you trying to do, and what gets in the way today? A real package and
+        command make this much easier to act on.
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
       label: Proposal
-      description: Describe the change and how it would help.
+      description: Describe the change and how it would help. Example output or flags are welcome.
     validations:
       required: true
   - type: textarea
     id: alternatives
     attributes:
       label: Alternatives
-      description: Describe any alternatives or workarounds you have considered.
+      description: Workarounds you use today, or other ways to solve this that you considered.
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contributing
+      options:
+        - label: I would like to work on this myself.

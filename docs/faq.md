@@ -174,3 +174,42 @@ Only GitHub repositories can be rebuilt. The Node.js major is taken from the rel
 workflow's `node-version`, then `.nvmrc`, `.node-version`, `.tool-versions` and
 `engines.node`, defaulting to 22; override it with `--node`. Real packages that were checked,
 and their results, are listed in [docs/real-world-results.md](real-world-results.md).
+
+---
+
+## How do I clean up the images and volumes releaseproof created?
+
+releaseproof normally removes its rebuild volume when the run finishes, including after a
+failed stage. `--keep-volume` deliberately keeps it for debugging, and an interrupted run
+or failed cleanup can leave it behind. Volumes are named `releaseproof-<hex>` and contain
+the checkout, dependencies and build output. List candidates first:
+
+```sh
+docker volume ls --filter name=releaseproof-
+```
+
+The name filter matches substrings, so review the results. Only remove a volume after its
+run has finished and you no longer need its debugging contents; removal deletes that data.
+Replace this example with the exact `releaseproof-<hex>` name you selected:
+
+```sh
+docker volume rm releaseproof-0123456789ab
+```
+
+Docker refuses to [remove a volume still used by a container](https://docs.docker.com/reference/cli/docker/volume/rm/).
+Do not force removal or clean up a volume belonging to a running check.
+
+Images remain cached between runs. Init and clone use `node:22-bookworm`; later stages use
+`node:<major>-bookworm` for the detected or selected Node.js major, also defaulting to 22.
+List the local Node images, then remove only a tag you no longer need:
+
+```sh
+docker image ls node
+docker image rm node:22-bookworm
+```
+
+Choose the actual major you used; if you supplied `--image`, review that image separately.
+These images may be shared with other projects. [Removing a tag](https://docs.docker.com/reference/cli/docker/image/rm/)
+does not necessarily remove shared image data or reclaim all its displayed size. Do not
+force removal of an image in use. The next check that needs a removed image downloads it
+again.

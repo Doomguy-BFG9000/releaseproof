@@ -73218,10 +73218,16 @@ function createDockerClient(options = {}) {
       try {
         return (await docker(["version", "--format", "{{.Server.Version}}"], 3e4)).trim();
       } catch (error2) {
-        throw new ToolError(
-          `Docker is not available (is Docker Desktop running?): ${errorMessage(error2)}`,
-          { cause: error2 }
-        );
+        const detail = errorMessage(error2);
+        let advice = "Docker is not available (is Docker Desktop running?)";
+        if (/\bENOENT\b|not recognized as an internal or external command/i.test(detail)) {
+          advice = "docker was not found on PATH: install Docker (https://docs.docker.com/get-docker/), or open a new terminal if you just installed it";
+        } else if (/cannot connect to the docker daemon|dockerDesktopLinuxEngine|error during connect/i.test(
+          detail
+        )) {
+          advice = "Docker is installed but not running: start Docker Desktop (or the docker service) and try again";
+        }
+        throw new ToolError(`${advice}: ${detail}`, { cause: error2 });
       }
     },
     async pull(image) {

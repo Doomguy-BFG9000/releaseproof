@@ -28,7 +28,10 @@ export function createProgram(): Command {
     .option("--node <major>", "Node.js major to build with (default: from the release workflow)")
     .option("--build-command <command>", "shell command to build with instead of the detected one")
     .option("--memory <size>", "Docker memory limit for the build containers (default: 4g)")
-    .option("--offline", "use the cached Sigstore trust root without refreshing it")
+    .option(
+      "--offline",
+      "use the cached Sigstore trust root only; registry, GitHub, Docker, dependencies and Rekor may still use network",
+    )
     .option(
       "--no-rekor",
       "skip looking up a staged version's provenance in the Rekor transparency log (the lookup sends Rekor the tarball's SHA-512)",

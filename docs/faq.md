@@ -123,6 +123,10 @@ needed every time (tracked in #9 and #33).
 Most of the time usually goes to the **install** stage, which downloads all dependencies
 including dev dependencies. The first run also pulls the `node:<major>-bookworm` image.
 
+The default stage timeouts are **10 minutes for clone, 20 minutes for install and 30 minutes
+for build**; a timeout ends in `COULD NOT VERIFY`, and the report names the timed-out stage
+and shows the tail of its log when output is available.
+
 The install stage is skipped for npm packages that need no `node_modules` to be packed: no
 build script, no `publishConfig.directory`, and no script that runs during `npm pack`
 (`prepack`, `prepare`, `prepublishOnly` and similar). Such packages typically finish in well

@@ -62,6 +62,17 @@ compare release vs rebuild
   command, then `npm pack --pack-destination /work/out`.
 - **Stage 4** streams the tarball to the host over stdout (no `docker cp`, no mounts).
 
+The default timeouts for the three main stages are defined by `DEFAULT_TIMEOUTS` in
+[`packages/core/src/rebuild/run.ts`](../packages/core/src/rebuild/run.ts):
+
+| Stage | Default timeout |
+| --- | --- |
+| `clone` | 10 minutes |
+| `install` | 20 minutes |
+| `build` | 30 minutes |
+
+These limits apply separately to each stage, not to the rebuild as a whole.
+
 Each stage records its command, exit code, duration and (truncated) output. Any failure or
 timeout makes the rebuild `failed` with the stage name and log tail; the verdict is then
 "could not verify", never "matches".

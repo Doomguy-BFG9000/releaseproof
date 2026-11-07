@@ -5,6 +5,7 @@ import { type CheckCommandOptions, runCheckCommand } from "./commands/check.js";
 
 export function createProgram(): Command {
   const program = new Command()
+    .exitOverride()
     .name("releaseproof")
     .description("Verify that an npm release matches its source before you approve it.")
     .version(pkg.version, "-v, --version");

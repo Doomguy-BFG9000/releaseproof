@@ -83,9 +83,9 @@ Docker flags or the planner need a unit test and, when they affect real packages
   bigger and need Docker and some reading of `docs/design-rebuild.md`.
 - Claim an issue before starting so two people do not do the same work: comment `/assign`
   (or just "I'd like to work on this") on an open, unassigned issue and it is assigned to you
-  automatically. Comment `/unassign` to give it back. If you want to change something that
-  has no issue yet, open one first and describe the change; for anything security-relevant,
-  read SECURITY.md.
+  automatically. You can hold up to three open issues at a time; comment `/unassign` to give
+  one back. If you want to change something that has no issue yet, open one first and
+  describe the change; for anything security-relevant, read SECURITY.md.
 
 ## Pull requests, step by step
 
@@ -163,6 +163,7 @@ Docker flags or the planner need a unit test and, when they affect real packages
 Rules that apply to every PR:
 
 - Third-party GitHub Actions in workflows are pinned to full commit SHAs, never tags.
+- Dependabot keeps these action pins up to date in a weekly grouped PR, reviewed like any other PR.
 - No new runtime dependency without an issue discussing it first; the CLI is bundled and
   every dependency ships to every user.
 - Nothing in the repository may execute package contents on the host, phone home, or

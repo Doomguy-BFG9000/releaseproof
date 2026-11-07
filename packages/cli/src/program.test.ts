@@ -17,10 +17,12 @@ function run(args: string[]): { output: string; exitCode: number | undefined } {
 }
 
 describe("releaseproof CLI", () => {
-  it("limits --offline to the Sigstore trust root in check --help", () => {
+  it("describes --offline as a trust-root cache preference in check --help", () => {
     const check = createProgram().commands.find((command) => command.name() === "check");
     const help = check?.helpInformation().replace(/\s+/g, " ");
-    expect(help).toContain("cached Sigstore trust root only");
+    expect(help).toContain(
+      "prefer the cached Sigstore trust root (still fetched when missing or expired)",
+    );
     expect(help).toContain(
       "registry, GitHub, Docker, dependencies and Rekor may still use network",
     );

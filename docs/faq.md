@@ -181,16 +181,17 @@ npx releaseproof check --stage <stage-id> --repo https://github.com/<owner>/<rep
 
 ## Does `--offline` disable all network access?
 
-No. `--offline` only tells Sigstore to use its cached trust root instead of refreshing it.
-It does not make a check air-gapped, disable the rebuild's networked stages or skip Rekor.
+No. `--offline` only tells Sigstore to prefer its cached trust root over refreshing it, and
+even that falls back to the network when there is no usable cache (see the table). It does
+not make a check air-gapped, disable the rebuild's networked stages or skip Rekor.
 
 | Endpoint / stage | What can be contacted | Flag controlling it |
 | --- | --- | --- |
-| Sigstore trust root | `tuf-repo-cdn.sigstore.dev`, the default Sigstore TUF mirror | `--offline` uses the cached trust root without refreshing it. |
+| Sigstore trust root | `tuf-repo-cdn.sigstore.dev`, the default Sigstore TUF mirror | `--offline` uses the cached trust root when it is present and still valid. On a first run (no cache), or with an expired or corrupt cache, Sigstore contacts the mirror anyway. |
 | Release registry | `registry.npmjs.org` by default, or the host chosen with `--registry`, for metadata, tarballs, attestations and signing keys; redirects may contact a CDN | No flag disables these requests. `--registry` changes the registry, not whether it is contacted. |
 | Source clone | `github.com` for the source commit; submodules may name additional hosts | No flag disables the clone when there is a source to rebuild. |
 | Docker image pulls | The image's registry (Docker Hub for the default `node:<major>-bookworm` image), including its authentication and download hosts | No flag disables image pulls. `--image` selects an image, not an offline mode. |
-| Dependency install | Registries and other dependency URLs in the project's configuration / lockfile; Corepack also downloads the selected pnpm or Yarn version | No flag disables network for the install stage. It is skipped only when the build planner finds it unnecessary. |
+| Dependency install | Registries and other dependency URLs in the project's configuration / lockfile; Corepack also downloads the package manager version the project pins (pnpm, Yarn, or npm when `packageManager` names npm) | No flag disables network for the install stage. It is skipped only when the build planner finds it unnecessary. |
 | Staged provenance lookup | `rekor.sigstore.dev`, sent the tarball's SHA-512 when staged provenance is missing and `--repo` is supplied | `--no-rekor` skips this lookup; `--offline` does not. |
 
 The exact host list depends on the registry, image, repository and lockfile, including their

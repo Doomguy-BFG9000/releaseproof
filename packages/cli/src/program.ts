@@ -31,7 +31,7 @@ export function createProgram(): Command {
     .option("--memory <size>", "Docker memory limit for the build containers (default: 4g)")
     .option(
       "--offline",
-      "use the cached Sigstore trust root only; registry, GitHub, Docker, dependencies and Rekor may still use network",
+      "prefer the cached Sigstore trust root (still fetched when missing or expired); registry, GitHub, Docker, dependencies and Rekor may still use network",
     )
     .option(
       "--no-rekor",

@@ -32,18 +32,27 @@ the pnpm shims, then retry from the repository root:
 
 ```sh
 npm install -g corepack@0.34.6
+corepack --version    # must print 0.34.6; if not, see below before going on
 corepack enable pnpm
 pnpm --version        # 12.14.0, from package.json
 pnpm install
 pnpm check
 ```
 
+If `corepack --version` still prints the old version, the Corepack bundled with Node comes
+first on your `PATH`, so the update is installed but never runs. Check which one runs with
+`where.exe corepack` (Windows) or `command -v corepack` (macOS, Linux). With the Windows
+`.msi` installer, the bundled copy lives in `C:\Program Files\nodejs`, which comes before
+npm's global folder `%APPDATA%\npm`. Remove it as the
+[Corepack installation notes](https://github.com/nodejs/corepack#manual-installs) describe
+(Windows Settings → Apps → Node.js → Modify, then deselect the "corepack manager" feature),
+open a new terminal and run `corepack --version` again. When Node is installed
+system-wide on macOS or Linux, `npm install -g` may also need `sudo`.
+
 Tested on Windows with Node 22.22.0: bundled Corepack 0.34.0 reproduced the error,
 and Corepack 0.34.6 restored `pnpm install` and `pnpm check`. The explicit version
 also avoids installing a newer Corepack whose Node engine range excludes
-22.22.0; check that range before choosing a different version. See the
-[Corepack installation notes](https://github.com/nodejs/corepack#manual-installs)
-if an existing Windows MSI installation prevents the update.
+22.22.0; check that range before choosing a different version.
 
 CI selects current Node 22 and 24 releases through `actions/setup-node`, rather
 than pinning Node 22.22.0. It still runs `corepack enable pnpm`, so the same

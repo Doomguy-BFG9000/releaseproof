@@ -38,19 +38,26 @@ describe("readRegistryKeys", () => {
     },
   );
 
-  it.each(["soon", "2025-13-45", ""])(
-    "rejects the entire list for invalid expiry %j",
-    (expires) => {
-      expect(
-        readRegistryKeys({
-          keys: [
-            { keyid: "valid", key: "public-key", expires: null },
-            { keyid: "invalid", key: "public-key", expires },
-          ],
-        }),
-      ).toBeNull();
-    },
-  );
+  it.each([
+    "soon",
+    "2025-13-45",
+    "",
+    1_700_000_000_000,
+    0,
+    true,
+    false,
+    {},
+    ["2027-01-29T00:00:00.000Z"],
+  ])("rejects the entire list for invalid expiry %j", (expires) => {
+    expect(
+      readRegistryKeys({
+        keys: [
+          { keyid: "valid", key: "public-key", expires: null },
+          { keyid: "invalid", key: "public-key", expires },
+        ],
+      }),
+    ).toBeNull();
+  });
 });
 
 describe("lookupRegistryKey", () => {
